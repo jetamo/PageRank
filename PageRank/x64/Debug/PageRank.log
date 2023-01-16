@@ -1,4 +1,5 @@
 ﻿  PageRank.cpp
-C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(96,16): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
-C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(114,29): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(127,16): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
+C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(145,29): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(177,36): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
   PageRank.vcxproj -> C:\Users\jetam\source\repos\PageRank\x64\Debug\PageRank.exe

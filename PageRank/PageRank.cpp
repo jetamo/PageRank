@@ -9,10 +9,9 @@
 
 std::string filename = "BerkStan.txt";
 
-const int BUFSIZE = 4096;
 const int NUM_THREADS = 100;
 
-std::vector<std::vector<std::string>> ls(NUM_THREADS);
+std::vector<std::unordered_map<int, std::vector<int>>> graph_chunks(NUM_THREADS);
 
 std::unordered_map<int, std::vector<int>> graph;
 
@@ -31,6 +30,13 @@ void end_timer() {
 }
 void print_elapsed_time() {
     std::cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " milliseconds\n" << std::endl;
+}
+
+bool is_number(const std::string& s)
+{
+    std::string::const_iterator it = s.begin();
+    while (it != s.end() && std::isdigit(*it)) ++it;
+    return !s.empty() && it == s.end();
 }
 
 bool ParallelReadTxtFile(LPCWSTR filepath) {
@@ -76,7 +82,17 @@ bool ParallelReadTxtFile(LPCWSTR filepath) {
                     current++;
                 }
                 current++;
-                ls[i].push_back(line);
+                std::string delimiter = "\t";
+                std::string delimiter2 = "\r";
+                std::string from = line.substr(0, line.find(delimiter));
+                std::string to = line.substr(line.find(delimiter) + 1, line.find(delimiter2) - line.find(delimiter) - 1);
+                bool num = is_number(from) && is_number(to);
+                if (!num)
+                    continue;
+                graph_chunks[i][stoi(from)].push_back(stoi(to));
+                //mtx.lock();
+                //graph[stoi(from)].push_back(stoi(to));
+                //mtx.unlock();
             }
             }, start, end);
     }
@@ -90,6 +106,19 @@ bool ParallelReadTxtFile(LPCWSTR filepath) {
     CloseHandle(hFile);
 
     return true;
+}
+
+void combine_graph_chunks() {
+    for (int i = 0; i < graph_chunks.size(); i++) {
+        for (auto const& x : graph_chunks[i])
+        {
+            int key = x.first;
+            for (int j = 0; j < x.second.size(); j++) {
+                if (std::find(graph[key].begin(), graph[key].end(), x.second[j]) != graph[key].end())
+                    graph[key].push_back(x.second[j]);
+            }
+        }
+    }
 }
 
 void load_file_part(int start, int end, std::ifstream &file, std::vector<std::string> &lines)
@@ -143,7 +172,7 @@ void load_data() {
 
     int from, to;
     while (file >> from >> to) {
-        //graph[from].push_back(to);
+        graph[from].push_back(to);
         //aa.push_back(std::to_string(from));
     }
 
@@ -156,12 +185,13 @@ int main()
     ParallelReadTxtFile(fn);
     //tmp();
     //load_data();
+    combine_graph_chunks();
     end_timer();
     print_elapsed_time();
-    int sum = 0;
-    for (int i = 0; i < NUM_THREADS; i++) {
-        sum += ls[i].size();
-    }
-    std::cout << sum << std::endl;
+    //int sum = 0;
+    //for (int i = 0; i < graph_chunks.size(); i++) {
+    //    sum += graph_chunks[i].size();
+    //}
+    std::cout << graph.size() << std::endl;
     return 0;
 }

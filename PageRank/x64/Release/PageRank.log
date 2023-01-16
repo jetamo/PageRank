@@ -1,10 +1,9 @@
 ﻿  PageRank.cpp
-C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(113,16): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
-C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(131,29): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(163,26): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(142,16): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
+C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(160,29): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
   Generating code
-  16 of 858 functions ( 1.9%) were compiled, the rest were copied from previous compilation.
+  23 of 951 functions ( 2.4%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+    3 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   PageRank.vcxproj -> C:\Users\jetam\source\repos\PageRank\x64\Release\PageRank.exe
