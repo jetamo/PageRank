@@ -11,9 +11,18 @@ std::string filename = "BerkStan.txt";
 
 const int NUM_THREADS = 100;
 
+
+int n = 0;
+float d = 0.85;
+float threshold = 1.0e-10;
+
 std::vector<std::unordered_map<int, std::vector<int>>> graph_chunks(NUM_THREADS);
 
 std::unordered_map<int, std::vector<int>> graph;
+std::unordered_map<int, int> outbound_edges;
+std::unordered_map<int, float> rank;
+
+int* nodes = NULL;
 
 std::chrono::high_resolution_clock::time_point t1;
 std::chrono::high_resolution_clock::time_point t2;
@@ -29,7 +38,7 @@ void end_timer() {
     std::cout << "Timer ended" << std::endl;
 }
 void print_elapsed_time() {
-    std::cout << "Time elapsed: " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " milliseconds\n" << std::endl;
+    std::cout << " " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << " milliseconds\n" << std::endl;
 }
 
 bool is_number(const std::string& s)
@@ -39,7 +48,7 @@ bool is_number(const std::string& s)
     return !s.empty() && it == s.end();
 }
 
-bool ParallelReadTxtFile(LPCWSTR filepath) {
+bool load_data(LPCWSTR filepath) {
     HANDLE hFile = CreateFile(filepath, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) {
         std::cout << "Error: Could not open file" << std::endl;
@@ -89,10 +98,10 @@ bool ParallelReadTxtFile(LPCWSTR filepath) {
                 bool num = is_number(from) && is_number(to);
                 if (!num)
                     continue;
-                graph_chunks[i][stoi(from)].push_back(stoi(to));
-                //mtx.lock();
-                //graph[stoi(from)].push_back(stoi(to));
-                //mtx.unlock();
+                graph_chunks[i][stoi(to)].push_back(stoi(from));
+                if (graph_chunks[i].find(stoi(from)) == graph_chunks[i].end()) {
+                    graph_chunks[i][stoi(from)];
+                }
             }
             }, start, end);
     }
@@ -105,93 +114,105 @@ bool ParallelReadTxtFile(LPCWSTR filepath) {
     CloseHandle(hMap);
     CloseHandle(hFile);
 
+
     return true;
 }
 
 void combine_graph_chunks() {
     for (int i = 0; i < graph_chunks.size(); i++) {
-        for (auto const& x : graph_chunks[i])
+        for (auto x : graph_chunks[i])
         {
             int key = x.first;
-            for (int j = 0; j < x.second.size(); j++) {
-                if (std::find(graph[key].begin(), graph[key].end(), x.second[j]) != graph[key].end())
-                    graph[key].push_back(x.second[j]);
+            int m = x.second.size();
+            //if (std::count(nodes.begin(), nodes.end(), key) == 0)
+            //    nodes.push_back(key);
+            //if (graph.find(key) == graph.end())
+            //    graph[key];
+            for (int j = 0; j < m; j++) {
+                int val = x.second[j];
+                if (outbound_edges.find(key) == outbound_edges.end()) {
+                    outbound_edges[key] = 0;
+                }
+                if (outbound_edges.find(val) == outbound_edges.end()) {
+                    outbound_edges[val] = 1;
+                }
+                else {
+                    outbound_edges[val]++;
+                }
+                //if (std::count(graph[key].begin(), graph[key].end(), val) == 0)
+                //    graph[key].push_back(val);                   
             }
+        }
+    }
+    n = outbound_edges.size();
+    nodes = new int[n];
+}
+
+
+void set_initial_rank() {
+    int it = 0;
+    for (auto const& x : outbound_edges)
+    {
+        int key = x.first;
+        rank[key] = 1.f / n;
+        nodes[it] = key;
+        it++;
+    }
+}
+
+void calculate_page_rank() {
+    bool done = false;
+    while (!done) {
+        float b = (1 - d) / n;
+        done = true;
+#pragma omp parallel for schedule(dynamic)
+        for (int i = 0; i < n; i++) {
+            int node = nodes[i];
+            float sum = 0.f;
+
+#pragma omp simd reduction(+:sum)
+            for (int j = 0; j < NUM_THREADS; j++) {
+                if (graph_chunks[j].find(node) != graph_chunks[j].end()) {
+                    for (int k = 0; k < graph_chunks[j][node].size(); k++) {
+                        sum += rank[graph_chunks[j][node][k]] / outbound_edges[graph_chunks[j][node][k]];
+                    }
+                }
+            }
+            float val = b + d * sum;
+            float original_rank = rank[node];
+            rank[node] = val;
+            if (std::abs(original_rank - val) > threshold)
+                done = false;
         }
     }
 }
 
-void load_file_part(int start, int end, std::ifstream &file, std::vector<std::string> &lines)
-{
-    //std::ifstream file(filename);
-    file.seekg(start);
-    std::string line;
-    //std::vector<std::string> t;
-    while (file.tellg() < end && std::getline(file, line)) {
-        lines.push_back(line);
-        //std::cout << start << std::endl;
+void print_ranks(int num) {
+    int it = 0;
+    for (auto x : rank) {
+        it++;
+        if (it >= num)
+            break;
+        std::cout << "Node " << x.first << "; rank " << x.second << std::endl;
     }
 }
 
-void tmp() {
-    int number_of_threads = 10;
-    std::vector<std::future<void>> threads;
-    std::vector<std::vector<std::string>> lines(number_of_threads);
-    std::ifstream file(filename);
-    file.seekg(0, std::ios::end);
-    int length = file.tellg();
-    
-
-    int part_size = length / number_of_threads; // divide the file into 4 parts
-
-    for (int i = 0; i < number_of_threads; i++) {
-        int from = part_size * i;
-        int to = part_size * (i + 1);
-        if (i == number_of_threads - 1)
-            to = length;
-        threads.push_back(std::async(std::launch::async, load_file_part, from, to, std::ref(file), std::ref(lines[i])));
-    }
-    for (int i = 0; i < number_of_threads; i++) {
-        threads[i].wait();
-    }
-    file.close();
-    int sum = 0;
-    for (int i = 0; i < lines.size(); i++) {
-        sum += lines[i].size();
-    }
-    std::cout << sum << std::endl;
-}
-
-void load_data() {
-    std::fstream newfile;
-    newfile.open("BerkStan.txt", std::ios::in); 
-    std::ifstream file("BerkStan.txt");
-    if (!file.is_open()) {
-        std::cout << "Failed to open file: " << std::endl;
-    }
-
-    int from, to;
-    while (file >> from >> to) {
-        graph[from].push_back(to);
-        //aa.push_back(std::to_string(from));
-    }
-
-}
 
 int main()
 {
     start_timer();
     LPCWSTR fn = L"BerkStan.txt";
-    ParallelReadTxtFile(fn);
-    //tmp();
-    //load_data();
+    load_data(fn);
     combine_graph_chunks();
+    set_initial_rank();
     end_timer();
+    std::cout << "Data loaded in: ";
     print_elapsed_time();
-    //int sum = 0;
-    //for (int i = 0; i < graph_chunks.size(); i++) {
-    //    sum += graph_chunks[i].size();
-    //}
-    std::cout << graph.size() << std::endl;
+    start_timer();
+    calculate_page_rank();
+    print_ranks(10);
+    end_timer();
+    std::cout << "Rank calculated in: ";
+    print_elapsed_time();
     return 0;
 }

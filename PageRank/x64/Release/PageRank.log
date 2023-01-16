@@ -1,9 +1,14 @@
-﻿  PageRank.cpp
-C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(142,16): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
-C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(160,29): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+﻿cl : command line warning D9025: overriding '/openmp' with '/openmp:experimental'
+  PageRank.cpp
+C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(16,15): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(17,26): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(126,36): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(147,30): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(173,9): warning C4849: OpenMP 'reduction' clause ignored in 'simd' directive
   Generating code
-  23 of 951 functions ( 2.4%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    3 functions had inline decision re-evaluated but remain unchanged
+  C:\Users\jetam\source\repos\PageRank\PageRank\PageRank.cpp(174) : info C5002: Omp simd loop not vectorized due to reason '1106'
+  5 of 707 functions ( 0.7%) were compiled, the rest were copied from previous compilation.
+    1 functions were new in current compilation
+    11 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   PageRank.vcxproj -> C:\Users\jetam\source\repos\PageRank\x64\Release\PageRank.exe
